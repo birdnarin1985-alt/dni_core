@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>DNI Core: Holographic Quantum</title>
+    <style>
+        /* Base & Reset */
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; background-color: #010205; font-family: 'Courier New', Courier, monospace; overflow: hidden; color: #e0f7fa; }
+        
+        /* Quantum Canvas Background */
+        #particleCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; pointer-events: none; }
+        
+        /* Layout */
+        .container { position: relative; z-index: 10; display: flex; align-items: center; justify-content: center; height: 100vh; padding: 20px; perspective: 1200px; }
+        
+        /* Holographic 3D Card */
+        .quantum-card { 
+            background: rgba(10, 15, 30, 0.4); 
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 255, 255, 0.15); 
+            padding: 35px; border-radius: 20px; width: 100%; max-width: 600px; 
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 255, 255, 0.05); 
+            transform-style: preserve-3d; transition: transform 0.1s; position: relative; overflow: hidden;
+        }
+
+        /* Glare Effect */
+        .glare { position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 50%, rgba(255,255,255,0) 100%); transform: rotate(45deg); pointer-events: none; transition: transform 0.1s; z-index: 11; }
+        
+        h2 { margin: 0 0 25px 0; color: #00ffff; font-size: 1.6rem; text-align: center; letter-spacing: 3px; text-shadow: 0 0 15px rgba(0, 255, 255, 0.8); transform: translateZ(30px); }
+
+        .settings-btn { position: absolute; top: 25px; right: 25px; background: none; border: none; color: #00ffff; font-size: 1.2rem; cursor: pointer; transition: all 0.3s; transform: translateZ(20px); }
+        .settings-btn:hover { transform: translateZ(30px) rotate(90deg); text-shadow: 0 0 15px #00ffff; }
+        
+        .settings-panel { display: none; padding: 15px; background: rgba(0, 0, 0, 0.6); border-radius: 10px; margin-bottom: 20px; border: 1px solid rgba(176, 0, 255, 0.4); transform: translateZ(20px); }
+        .settings-panel.active { display: block; animation: fadeIn 0.4s ease-out; }
+        
+        label { font-size: 0.85rem; color: #b2ebf2; display: block; margin-bottom: 8px; letter-spacing: 1px; }
+        input[type="password"], textarea { width: 100%; background: rgba(0, 0, 0, 0.5); border: 1px solid rgba(0, 255, 255, 0.3); color: #fff; padding: 15px; border-radius: 10px; box-sizing: border-box; font-family: inherit; font-size: 1rem; outline: none; transition: all 0.3s; transform: translateZ(20px); }
+        input[type="password"]:focus, textarea:focus { border-color: #00ffff; box-shadow: 0 0 20px rgba(0, 255, 255, 0.2); }
+        textarea { resize: none; min-height: 80px; margin-bottom: 20px; line-height: 1.6; }
+        
+        .btn-quantum { background: linear-gradient(90deg, #0d47a1, #00b4d8); color: white; border: 1px solid #00ffff; padding: 15px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; font-family: inherit; font-size: 1.1rem; text-transform: uppercase; letter-spacing: 2px; transition: all 0.3s; box-shadow: 0 0 20px rgba(0, 180, 216, 0.4); transform: translateZ(30px); }
+        .btn-quantum:hover { background: linear-gradient(90deg, #00b4d8, #48cae4); box-shadow: 0 0 30px rgba(0, 255, 255, 0.6); text-shadow: 0 0 8px white; transform: translateZ(35px) scale(1.02); }
+        
+        .response-container { display: none; margin-top: 25px; transform: translateZ(20px); }
+        .protocol-badge { font-size: 0.75rem; color: #7ee787; margin-bottom: 10px; text-shadow: 0 0 8px rgba(126, 231, 135, 0.6); }
+        
+        .response-box { background: rgba(0, 0, 0, 0.7); padding: 20px; border-radius: 10px; font-size: 1rem; color: #e0f7fa; border-left: 4px solid #00ffff; line-height: 1.8; max-height: 350px; overflow-y: auto; box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.9); white-space: pre-wrap; position: relative; }
+        
+        /* Blinking Cursor for Typewriter */
+        .cursor { display: inline-block; width: 8px; height: 1em; background-color: #00ffff; animation: blink 1s step-end infinite; vertical-align: bottom; margin-left: 2px; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        
+        .action-buttons { display: flex; gap: 12px; margin-top: 15px; }
+        .btn-action { flex: 1; background: rgba(176, 0, 255, 0.1); border: 1px solid rgba(176, 0, 255, 0.5); color: #d1c4e9; padding: 10px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; transition: all 0.3s; }
+        .btn-action:hover { background: rgba(176, 0, 255, 0.3); box-shadow: 0 0 15px rgba(176, 0, 255, 0.5); color: white; transform: translateY(-2px); }
+        .btn-action.voice { border-color: #00ffff; background: rgba(0, 255, 255, 0.1); color: #e0f7fa; }
+        .btn-action.voice:hover { background: rgba(0, 255, 255, 0.2); box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
+        
+        .status-bar { margin-top: 30px; font-size: 0.85rem; color: #00ffff; display: flex; align-items: center; justify-content: center; gap: 15px; transform: translateZ(25px); }
+        .wave-container { width: 150px; height: 4px; background: rgba(255, 255, 255, 0.1); border-radius: 2px; overflow: hidden; }
+        .wave-fill { height: 100%; background: #00ffff; width: 0%; transition: width 0.1s linear; box-shadow: 0 0 15px #00ffff; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <!-- Quantum Particles -->
+    <canvas id="particleCanvas"></canvas>
+
+    <div class="container" id="cardContainer">
+        <div class="quantum-card" id="quantumCard">
+            <div class="glare" id="glare"></div>
+            
+            <h2>⚡ NEURAL LINK ⚡</h2>
+            <button class="settings-btn" onclick="toggleSettings()" title="Settings">⚙️</button>
+            
+            <div class="settings-panel" id="settingsPanel">
+                <label>Gemini API Key (Local Node):</label>
+                <input type="password" id="apiKeyInput" placeholder="Initialize Key Matrix...">
+            </div>
+
+            <textarea id="intentInput" placeholder="ป้อนเจตจำนงแห่งสุญญตา (Plain Text)..." oninput="autoResize(this)"></textarea>
+            <button class="btn-quantum" onclick="executeDniPipeline()">Initiate Neural Sync 🚀</button>
+            
+            <div class="response-container" id="responseContainer">
+                <div class="protocol-badge">[ Protocol: Zero Overhead / Direct Stream ]</div>
+                <div class="response-box" id="aiResponse"><span id="typewriterText"></span><span class="cursor" id="cursor"></span></div>
+                
+                <div class="action-buttons">
+                    <button class="btn-action" onclick="copyResponse()">📋 คัดลอกพิมพ์เขียว</button>
+                    <button class="btn-action voice" onclick="replayVoice()">🔊 สตรีมเสียงควอนตัม</button>
+                </div>
+            </div>
+            
+            <div class="status-bar">
+                <span>WAVE SYNC</span>
+                <div class="wave-container"><div class="wave-fill" id="waveFill"></div></div>
+                <span id="waveValue">0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. System Initialization ---
+        window.onload = function() {
+            const savedKey = localStorage.getItem('dni_secure_api_key');
+            if (savedKey) {
+                document.getElementById('apiKeyInput').value = savedKey;
+            } else {
+                document.getElementById('settingsPanel').classList.add('active');
+            }
+            startSandWaveBreathing();
+            initParticles();
+        };
+
+        function toggleSettings() { document.getElementById('settingsPanel').classList.toggle('active'); }
+        function autoResize(textarea) { textarea.style.height = '80px'; textarea.style.height = (textarea.scrollHeight) + 'px'; }
+
+        // --- 2. 3D Holographic Tilt Effect ---
+        const card = document.getElementById('quantumCard');
+        const glare = document.getElementById('glare');
+        document.getElementById('cardContainer').addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left; 
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2; 
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -10; // Max tilt 10deg
+            const rotateY = ((x - centerX) / centerX) * 10;
+            
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            glare.style.transform = `translate(${x * 0.5 - centerX}px, ${y * 0.5 - centerY}px) rotate(45deg)`;
+        });
+        document.getElementById('cardContainer').addEventListener('mouseleave', () => {
+            card.style.transform = `perspective(1000px) rotateX(0deg) rotateY(0deg)`;
+            glare.style.transform = `translate(0, 0) rotate(45deg)`;
+        });
+
+        // --- 3. Neural Stream (Typewriter Effect) ---
+        let typeInterval;
+        let fullResponseText = "";
+        
+        function typeWriter(text, elementId, speed = 20) {
+            clearInterval(typeInterval);
+            const el = document.getElementById(elementId);
+            el.innerHTML = "";
+            let i = 0;
+            
+            typeInterval = setInterval(() => {
+                if (i < text.length) {
+                    // Handle HTML tags safely (if any) or just plain text
+                    el.innerHTML += text.charAt(i);
+                    i++;
+                    // Scroll to bottom as it types
+                    el.parentElement.scrollTop = el.parentElement.scrollHeight;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, speed);
+        }
+
+        // --- 4. Voice Synthesis ---
+        function speakRobotic(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const cleanText = text.replace(/[\*\[\]_#]/g, ''); // Remove markdown for speech
+                const msg = new SpeechSynthesisUtterance("ระบบตอบรับ... " + cleanText);
+                msg.lang = 'th-TH';
+                msg.pitch = 0.1; // Deep robotic
+                msg.rate = 0.9; 
+                window.speechSynthesis.speak(msg);
+            }
+        }
+        function replayVoice() { if(fullResponseText) speakRobotic(fullResponseText); }
+
+        // --- 5. Zero Overhead API Execution ---
+        async function executeDniPipeline() {
+            const apiKey = document.getElementById('apiKeyInput').value.trim();
+            const rawIntent = document.getElementById('intentInput').value.trim();
+            const textTarget = document.getElementById('typewriterText');
+            
+            if (!apiKey) { alert("⚠️ ระบุ API Key"); return; }
+            if (!rawIntent) return;
+
+            localStorage.setItem('dni_secure_api_key', apiKey);
+            document.getElementById('settingsPanel').classList.remove('active');
+            document.getElementById('responseContainer').style.display = 'block';
+            
+            clearInterval(typeInterval);
+            textTarget.innerHTML = "<span style='color:#b000ff;'>Establishing Zero Latency Stream...</span>";
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ contents: [{ parts: [{ text: rawIntent }] }] })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    fullResponseText = `[ERROR]: ${JSON.stringify(data)}`;
+                    typeWriter(fullResponseText, 'typewriterText');
+                    return;
+                }
+
+                fullResponseText = data.candidates?.[0]?.content?.parts?.[0]?.text || "ความว่างเปล่า...";
+                
+                // เริ่มพิมพ์ข้อความและอ่านออกเสียงพร้อมกัน
+                typeWriter(fullResponseText, 'typewriterText');
+                speakRobotic(fullResponseText);
+
+            } catch (error) {
+                fullResponseText = `[CONNECTION LOST]: ${error.message}`;
+                typeWriter(fullResponseText, 'typewriterText');
+            }
+        }
+
+        function copyResponse() {
+            navigator.clipboard.writeText(fullResponseText).then(() => {
+                const btns = document.querySelectorAll('.btn-action');
+                btns[0].innerText = "✅ คัดลอกสำเร็จ";
+                setTimeout(() => btns[0].innerText = "📋 คัดลอกพิมพ์เขียว", 2000);
+            });
+        }
+
+        // --- 6. Visual Systems (Wave & Particles) ---
+        function startSandWaveBreathing() {
+            let t = 0;
+            setInterval(() => {
+                t += 0.1;
+                const psi = 1.0 * Math.sin(1.5 * t) * Math.exp(-0.02 * (t % 20));
+                const intensity = Math.abs(psi);
+                const waveFill = document.getElementById('waveFill');
+                
+                waveFill.style.width = `${intensity * 100}%`;
+                waveFill.style.background = intensity > 0.7 ? '#b000ff' : '#00ffff';
+                waveFill.style.boxShadow = `0 0 15px ${intensity > 0.7 ? '#b000ff' : '#00ffff'}`;
+                document.getElementById('waveValue').innerText = intensity.toFixed(2);
+            }, 50);
+        }
+
+        // Quantum Particle Engine
+        function initParticles() {
+            const canvas = document.getElementById('particleCanvas');
+            const ctx = canvas.getContext('2d');
+            let w, h, particles;
+
+            function resize() {
+                w = canvas.width = window.innerWidth;
+                h = canvas.height = window.innerHeight;
+            }
+            window.addEventListener('resize', resize);
+            resize();
+
+            particles = Array.from({length: 80}, () => ({
+                x: Math.random() * w, y: Math.random() * h,
+                vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5,
+                size: Math.random() * 2 + 1
+            }));
+
+            function draw() {
+                ctx.clearRect(0, 0, w, h);
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.8)';
+                ctx.strokeStyle = 'rgba(0, 255, 255, 0.15)';
+
+                for (let i = 0; i < particles.length; i++) {
+                    let p = particles[i];
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0 || p.x > w) p.vx *= -1;
+                    if (p.y < 0 || p.y > h) p.vy *= -1;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Connect close particles
+                    for (let j = i + 1; j < particles.length; j++) {
+                        let p2 = particles[j];
+                        let dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.lineWidth = 1 - dist/120;
+                            ctx.moveTo(p.x, p.y);
+                            ctx.lineTo(p2.x, p2.y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        }
+    </script>
+</body>
+</html>
